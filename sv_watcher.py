@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""
-Student Village Zurich - room availability watcher.
-Checks the public Apply page and notifies you (via ntfy) when it changes,
-especially when the "all rooms are rented / no waiting list" notice disappears.
-"""
 
 import os
 import re
