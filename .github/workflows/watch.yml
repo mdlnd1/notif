@@ -1,0 +1,46 @@
+name: student-village-watcher
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sv-watcher
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run watcher
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          SV_STATE_FILE: sv_state.json
+        run: python sv_watcher.py
+
+      - name: Persist state (only if it changed)
+        run: |
+          if [[ -n "$(git status --porcelain sv_state.json)" ]]; then
+            git config user.name  "sv-watcher-bot"
+            git config user.email "actions@users.noreply.github.com"
+            git add sv_state.json
+            git commit -m "Update watcher state [skip ci]"
+            git push
+          else
+            echo "No state change - nothing to commit."
+          fi
